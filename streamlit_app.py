@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import tempfile
 import json
+import datetime
 from parser.docx_parser import parse_resume
 from nlp.text_cleaner import clean_text
 from nlp.skill_extractor import extract_skills
@@ -280,7 +281,38 @@ with tab4:
                     }
                     st.success(f"🎉 Thank you, **{full_name}**! Application for **{job['title']}** submitted successfully!")
                     if confetti:
-                        confetti.confetti()
+                        confetti.confetti(emojis=["🎉", "✨", "🎊"])
+                    
+                    # Save to JSON
+                    application_data = {
+                        'job_title': job['title'],
+                        'full_name': full_name,
+                        'email': email,
+                        'phone': phone,
+                        'cover_letter': cover_letter,
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'match_score': job['match_score']
+                    }
+                    
+                    json_path = 'data/applications.json'
+                    reset_file = False
+                    try:
+                        if os.path.exists(json_path):
+                            with open(json_path, 'r', encoding='utf-8-sig', errors="ignore") as f:
+                                applications = json.load(f)
+                    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                        st.warning(f"⚠️ Corrupted applications file detected and reset. ({str(e)[:50]}...)")
+                        applications = []
+                        reset_file = True
+                    
+                    applications.append(application_data)
+                    with open(json_path, 'w', encoding='utf-8-sig', errors="ignore") as f:
+                        json.dump(applications, f, indent=2, ensure_ascii=False)
+                    
+                    if reset_file:
+                        st.success("✅ File fixed and application saved!")
+                    else:
+                        st.info(f"💾 Application saved")
                 else:
                     st.error("Please fill all required fields (*)")
             else:
@@ -288,5 +320,5 @@ with tab4:
 
 # Footer
 st.markdown("---")
-st.markdown("*Built with ❤️ using Streamlit | v1.0*")
+st.markdown("*Built by Souvik | v1.0*")
 
